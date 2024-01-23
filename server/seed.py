@@ -1,48 +1,101 @@
-from random import randint, choice as rc
+from app import app, db
+from models import Restaurant, Pizza, RestaurantPizza
+import random
 
-from faker import Faker
+ke_restaurants = [
+     "Al-Beik Restaurant",
+    "Java House",
+    "Artcaffe",
+    "Cafe Deli",
+    "Kilimanjaro Jamia",
+    "Villa Rosa Kempinski",
+    "Carnivore Restaurant",
+    "Talisman Restaurant",
+    "Mama Nitilie Restaurant",
+    "Nyama Kafry",
+    "Habesha Restaurant",
+    "The Talisman",
+    "Mama Rocks Gourmet Burgers",
+    "About Thyme Restaurant",
+    "Cafe Maghreb",
+    "Lord Erroll Gourmet Restaurant",
+    "Que Pasa Bar & Bistro",
+    "Sankara Nairobi, Sarabi Rooftop Bar",
+    "Anghiti Restaurant",
+    "Seven Seafood & Grill",
+    "Zen Garden",
+    "Hashmi BBQ",
+    "Le Palanka",
+    "Hash Grill Restaurant",
+    "Camel's Joint",
+    "Poppy Pine Joint"
+]
 
-from app import app
-from models import db, Restaurant, Pizza, RestaurantPizza
+pizza_flavors = [
+      "Margherita",
+    "Pepperoni",
+    "Hawaiian",
+    "Supreme",
+    "BBQ Chicken",
+    "Veggie Supreme",
+    "Meat Lovers",
+    "Buffalo Chicken",
+    "Mushroom and Swiss",
+    "White Garlic",
+    "Pesto and Tomato",
+    "Four Cheese",
+    "Spinach and Feta",
+    "Sausage and Peppers",
+    "Mediterranean",
+    "BBQ Pulled Pork",
+    "Shrimp Scampi",
+    "Taco Pizza",
+    "Alfredo Chicken",
+    "BLT Pizza",
+    "Philly Cheesesteak",
+    "Caprese",
+    "Greek Pizza",
+    "Breakfast Pizza",
+    "Truffle and Mushroom"
+]
 
-fake = Faker()
+def get_random_ingredients():
+    pizza_ingredients = [
+        "Tomato sauce", "Cheese", "Mushrooms", "Pepperoni", "Onions",
+        "Bell peppers", "Olives", "Bacon", "Sausage", "Ham",
+        "Pineapple", "Chicken", "Garlic", "Spinach", "Feta cheese",
+        "Parmesan cheese", "Oregano",
+    ]
+    return random.sample(pizza_ingredients, random.randint(3, 10))
 
-with app.app_context():
+def seed_data():
+    with app.app_context():
+        db.create_all()
 
-    Restaurant.query.delete()
-    Pizza.query.delete()
-    RestaurantPizza.query.delete()
+        # Create restaurants
+        for restaurant_name in ke_restaurants:
+            existing_restaurant = Restaurant.query.filter_by(name=restaurant_name).first()
+            if not existing_restaurant:
+                restaurant = Restaurant(name=restaurant_name, address=f"{restaurant_name} Address")
+                db.session.add(restaurant)
+        db.session.commit()
 
-    restaurants = []
-    for i in range(30):
-        r = Restaurant(name=fake.city(), address = fake.address())
-        restaurants.append(r)
+        # Create pizzas
+        for pizza_flavor in pizza_flavors:
+            pizza_ingredients = get_random_ingredients()
+            pizza = Pizza(name=pizza_flavor, ingredients=f"{', '.join(pizza_ingredients)}")
+            db.session.add(pizza)
+        db.session.commit()
 
-    db.session.add_all(restaurants)
+        # Create restaurant-pizza associations with prices
+        for restaurant_name in ke_restaurants:
+            restaurant = Restaurant.query.filter_by(name=restaurant_name).first()
+            for pizza_flavor in pizza_flavors:
+                pizza = Pizza.query.filter_by(name=pizza_flavor).first()
+                price = round(random.uniform(5, 25), 2)  # Random price between 5 and 25
+                association = RestaurantPizza(price=price, pizza=pizza, restaurant=restaurant)
+                db.session.add(association)
+        db.session.commit()
 
-    pizzas = []
-    for i in range(100):
-        p = Pizza(
-            name=fake.color_name(),
-            ingredients="Dough, Tomato Sauce, Cheese, Pepperoni"
-        )
-        pizzas.append(p)
-
-    db.session.add_all(pizzas)
-    db.session.commit()
-    
-    restaurant_pizzas = []
-    for i in range(200):
-        p = rc(pizzas)
-        r = rc(restaurants)
-        
-        pr = RestaurantPizza(
-            price = randint(1, 30),
-            pizza = rc(pizzas),
-            restaurant = rc(restaurants)
-        )
-        restaurant_pizzas.append(pr)
-    
-    db.session.add_all(restaurant_pizzas)
-    db.session.commit()
-    
+if __name__ == '__main__':
+    seed_data()

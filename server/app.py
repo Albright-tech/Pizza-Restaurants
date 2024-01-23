@@ -9,6 +9,7 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///eateries.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+
 SWAGGER_URL = '/api/docs'  # URL for exposing Swagger UI (without trailing '/')
 API_URL = '/static/swagger.json'  # Our API url (can of course be a local resource)
 
